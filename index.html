@@ -271,88 +271,85 @@
     .abilities .ability-pill.priority   { background: teal;    box-shadow:0 0 8px teal; }
     .abilities .ability-pill.hidden     { background:#7b1fa2; box-shadow:0 0 8px #7b1fa2; }
     .abilities .ability-pill.selected   { box-shadow: 0 0 12px var(--accent); transform: scale(1.05); }
+    /* at bottom of your <style> */
+.card.exporting {
+  /* match your dark theme behind the card */
+  background: #1c1c1c !important;
+  backdrop-filter: none !important;
+}
+
 
   </style>
 </head>
 <body>
 
-    <div class="panel left-panel">
-        <h2>Waveform Builder</h2>
-      
-        <!-- 1) Pokémon name & autocomplete -->
-        <label>Pokémon Name</label>
-        <input type="text" id="nameInput" placeholder="e.g. Garchomp" list="pokemon-list">
-      
-        <!-- 2) Nature (25 options!) -->
-        <label>Nature</label>
-        <select id="natureInput">
-          <option>Hardy</option><option>Lonely</option><option>Brave</option><option>Adamant</option>
-          <option>Naughty</option><option>Bold</option><option>Docile</option><option>Relaxed</option>
-          <option>Impish</option><option>Lax</option><option>Timid</option><option>Hasty</option>
-          <option>Serious</option><option>Jolly</option><option>Naive</option><option>Modest</option>
-          <option>Mild</option><option>Quiet</option><option>Bashful</option><option>Rash</option>
-          <option>Calm</option><option>Gentle</option><option>Sassy</option><option>Careful</option>
-          <option>Quirky</option>
-        </select>
-      
-        <!-- 3) Held Item -->
-        <label>Held Item</label>
-        <input type="text" id="itemInput" placeholder="e.g. Choice Scarf" list="item-list">
-      
-        <!-- 4) Ability -->
-        <label>Ability</label>
-        <select id="abilityInput">
-          <option value="">Select Ability…</option>
-        </select>
-      
-        <!-- 5) Card theme -->
-        <label>Card Background Theme</label>
-        <select id="bgThemeSelect">
-          <option value="default">Glass Fade</option>
-          <option value="sunset">Fiery Sunset</option>
-          <option value="abyss">Abyssal Dark</option>
-          <option value="aqua">Aqua Flow</option>
-          <option value="grid">Digital Grid</option>
-        </select>
-      
-        <!-- 6) Moves -->
-        <label>Moves</label>
-        <input class="moveInput" placeholder="Move 1" list="move-list">
-        <input class="moveInput" placeholder="Move 2" list="move-list">
-        <input class="moveInput" placeholder="Move 3" list="move-list">
-        <input class="moveInput" placeholder="Move 4" list="move-list">
-      
-        <!-- 7) Action Buttons -->
-        <button id="updateBtn">Update Card</button>
-        <button id="exportBtn">Export PNG</button>
-      
-        <!-- hidden datalists for autocomplete -->
-        <datalist id="pokemon-list"></datalist>
-        <datalist id="move-list"></datalist>
-        <datalist id="item-list"></datalist>
-      </div>
+  <div class="panel left-panel">
+    <h2>Waveform Builder</h2>
 
-      <div class="panel right-panel">
-        <div class="card" id="waveformCard">
-          <h3 id="pokeName">Garchomp</h3>
-          <div class="sprite-container">
-            <img id="pokeImg" src="" alt="Sprite">
-          </div>
-          <div class="types"    id="pokeTypes"></div>
-          <div class="abilities" id="pokeAbilities"></div>
-         <!-- ── Nature display ── -->
-          <p id="pokeNature" style="margin:.5rem 0; font-weight:600;"></p>
+    <label>Pokémon Name</label>
+    <input type="text" id="nameInput" placeholder="e.g. Garchomp" list="pokemon-list">
 
-          <div class="item-display">
-            <img id="itemImg" src="" alt="">
-            <span id="pokeItem">None</span>
-          </div>
-          <h4>Base Stats</h4>
-          <div id="statsChart"></div>
-          <h4>Moves</h4>
-          <div class="moves-grid" id="movesGrid"></div>
-        </div>
+    <label>Nature</label>
+    <select id="natureInput">
+      <option>Hardy</option><option>Lonely</option><option>Brave</option><option>Adamant</option>
+      <option>Naughty</option><option>Bold</option><option>Docile</option><option>Relaxed</option>
+      <option>Impish</option><option>Lax</option><option>Timid</option><option>Hasty</option>
+      <option>Serious</option><option>Jolly</option><option>Naive</option><option>Modest</option>
+      <option>Mild</option><option>Quiet</option><option>Bashful</option><option>Rash</option>
+      <option>Calm</option><option>Gentle</option><option>Sassy</option><option>Careful</option>
+      <option>Quirky</option>
+    </select>
+
+    <label>Held Item</label>
+    <input type="text" id="itemInput" placeholder="e.g. Choice Scarf" list="item-list">
+
+    <label>Ability</label>
+    <select id="abilityInput">
+      <option value="">Select Ability…</option>
+    </select>
+
+    <label>Card Background Theme</label>
+    <select id="bgThemeSelect">
+      <option value="default">Glass Fade</option>
+      <option value="sunset">Fiery Sunset</option>
+      <option value="abyss">Abyssal Dark</option>
+      <option value="aqua">Aqua Flow</option>
+      <option value="grid">Digital Grid</option>
+    </select>
+
+    <label>Moves</label>
+    <input class="moveInput" placeholder="Move 1" list="move-list">
+    <input class="moveInput" placeholder="Move 2" list="move-list">
+    <input class="moveInput" placeholder="Move 3" list="move-list">
+    <input class="moveInput" placeholder="Move 4" list="move-list">
+
+    <button id="updateBtn">Update Card</button>
+    <button id="exportBtn">Export PNG</button>
+
+    <datalist id="pokemon-list"></datalist>
+    <datalist id="move-list"></datalist>
+    <datalist id="item-list"></datalist>
+  </div>
+
+  <div class="panel right-panel">
+    <div class="card" id="waveformCard">
+      <h3 id="pokeName">Garchomp</h3>
+      <div class="sprite-container">
+        <img id="pokeImg" crossorigin="anonymous" src="" alt="Sprite">
       </div>
+      <div class="types"    id="pokeTypes"></div>
+      <div class="abilities" id="pokeAbilities"></div>
+      <p id="pokeNature" style="margin:.5rem 0; font-weight:600;"></p>
+      <div class="item-display">
+        <img id="itemImg" crossorigin="anonymous" src="" alt="">
+        <span id="pokeItem">None</span>
+      </div>
+      <h4>Base Stats</h4>
+      <div id="statsChart"></div>
+      <h4>Moves</h4>
+      <div class="moves-grid" id="movesGrid"></div>
+    </div>
+  </div>
       <script>
         // — Map each nature to [↑,↓] stat keys
         const natureMap = {
@@ -521,29 +518,40 @@
                              .map(i=>i.value.trim()).filter(Boolean);
           renderMoves(moves);
         }
-      
-        // 7) Wire everything up + initial render
-        document.addEventListener('DOMContentLoaded',()=>{
+        document.addEventListener('DOMContentLoaded', () => {
   loadAutocompleteLists();
-
   loadItemList();
   document.getElementById('nameInput')
           .addEventListener('change', loadPokemonAbilities);
   document.getElementById('natureInput')
           .addEventListener('change', updateCard);
-          
 
-  // ← MISSING LINE:
   document.getElementById('updateBtn')
           .addEventListener('click', updateCard);
 
+          document
+  .getElementById('exportBtn')
+  .addEventListener('click', () => {
+    const card = document.getElementById('waveformCard');
+    card.classList.add('exporting');
 
-  document.getElementById('exportBtn')
-          .addEventListener('click', ()=>{/* … */});
+    html2canvas(card, {
+      useCORS: true,
+      backgroundColor: null
+    }).then(canvas => {
+      card.classList.remove('exporting');
+      const link = document.createElement('a');
+      link.download = `${document.getElementById('pokeName').textContent}.png`;
+      link.href     = canvas.toDataURL('image/png');
+      link.click();
+    });
+  });
+
+
 
   updateCard();  // initial render
 });
-      </script>
+       </script>
       </body>
       </html>
             
