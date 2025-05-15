@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Waveform Builder v2</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    /* ── RESET & BASE ── */
+    *,*::before,*::after { box-sizing: border-box; }
+    html,body { margin:0; padding:0; overflow-x:hidden; height:100vh; font-family:'Fredoka',sans-serif; background:#121212; color:#eee; display:flex; }
+    :root { --accent:#e3350d; --radius:18px; --shadow:0 4px 30px rgba(0,0,0,0.2); --blur:blur(12px); }
+
+    /* ── PANELS ── */
+    .panel { flex:1; min-width:0; padding:2rem; overflow-y:auto;
+             background:linear-gradient(135deg,#1c1c1c,#121212); }
+    .left-panel { border-right:1px solid rgba(255,255,255,0.1); }
+    .right-panel { display:flex; align-items:center; justify-content:center; }
+
+    /* ── FORM CONTROLS ── */
+    label { display:block; font-weight:600; margin-top:1rem; }
+    input,select { width:100%; padding:.7rem; margin-top:.5rem;
+                   border:1px solid #444; border-radius:var(--radius);
+                   background:rgba(40,40,40,0.6); backdrop-filter:var(--blur);
+                   color:#bbb; font-size:1rem;
+                   /* placeholder styling if you need */
+                  }
+    button { margin-top:2rem; padding:.7rem 1.3rem; border:none;
+             border-radius:var(--radius); background:var(--accent);
+             color:#fff; font-weight:bold; cursor:pointer;
+             transition:transform .2s,box-shadow .2s; }
+    button:hover { transform:scale(1.03); box-shadow:0 0 12px var(--accent); }
+
+    /* ── CARD ── */
+    .card {
+      width:min(380px,90vw);
+      padding:2rem; border-radius:var(--radius);
+      background:rgba(255,255,255,0.07);
+      box-shadow:var(--shadow); backdrop-filter:var(--blur);
+      text-align:center;
+    }
+    .card h3 { font-size:1.8rem; margin:.5rem 0; color:var(--accent); }
+
+    /* ── SPRITE ── */
+    .sprite-container img { width:120px; margin-bottom:1rem; }
+
+    /* ── TYPES & ABILITIES ── */
+    .types, .abilities { margin:.5rem 0; }
+    .types span, .abilities .ability-pill {
+      display:inline-block; margin:0 4px; padding:4px 8px;
+      border-radius:12px; font-size:.85rem; font-weight:600;
+      box-shadow:0 0 6px rgba(0,0,0,0.2);
+      transition:box-shadow .2s;
+    }
+    .types span:hover, .abilities .ability-pill:hover {
+      box-shadow:0 0 12px rgba(0,0,0,0.3);
+    }
+    /* full set of 18 type-glows */
+    .type-normal  { background:#A8A878; color:#fff; box-shadow:0 0 6px rgba(168,168,120,0.7); }
+    .type-fire    { background:#F08030; color:#fff; box-shadow:0 0 6px rgba(240,128,48,0.7); }
+    .type-water   { background:#6890F0; color:#fff; box-shadow:0 0 6px rgba(104,144,240,0.7); }
+    .type-electric{ background:#F8D030; color:#000; box-shadow:0 0 6px rgba(248,208,48,0.7); }
+    .type-grass   { background:#78C850; color:#fff; box-shadow:0 0 6px rgba(120,200,80,0.7); }
+    .type-ice     { background:#98D8D8; color:#000; box-shadow:0 0 6px rgba(152,216,216,0.7); }
+    .type-fighting{ background:#C03028; color:#fff; box-shadow:0 0 6px rgba(192,48,40,0.7); }
+    .type-poison  { background:#A040A0; color:#fff; box-shadow:0 0 6px rgba(160,64,160,0.7); }
+    .type-ground  { background:#E0C068; color:#000; box-shadow:0 0 6px rgba(224,192,104,0.7); }
+    .type-flying  { background:#A890F0; color:#fff; box-shadow:0 0 6px rgba(168,144,240,0.7); }
+    .type-psychic { background:#F85888; color:#fff; box-shadow:0 0 6px rgba(248,88,136,0.7); }
+    .type-bug     { background:#A8B820; color:#fff; box-shadow:0 0 6px rgba(168,184,32,0.7); }
+    .type-rock    { background:#B8A038; color:#fff; box-shadow:0 0 6px rgba(184,160,56,0.7); }
+    .type-ghost   { background:#705898; color:#fff; box-shadow:0 0 6px rgba(112,88,152,0.7); }
+    .type-dragon  { background:#7038F8; color:#fff; box-shadow:0 0 6px rgba(112,56,248,0.7); }
+    .type-dark    { background:#705848; color:#fff; box-shadow:0 0 6px rgba(112,88,72,0.7); }
+    .type-steel   { background:#B8B8D0; color:#000; box-shadow:0 0 6px rgba(184,184,208,0.7); }
+    .type-fairy   { background:#EE99AC; color:#000; box-shadow:0 0 6px rgba(238,153,172,0.7); }
+
+    /* ── MOVES GRID ── */
+    .moves-grid {
+      display:grid; grid-template-columns:repeat(2,1fr);
+      gap:.5rem; margin-top:.5rem;
+    }
+    .move-card {
+      position:relative;
+      backdrop-filter:var(--blur);
+      background:rgba(255,255,255,0.07);
+      border-radius:var(--radius);
+      padding:.6rem; display:flex; align-items:center; gap:.4rem;
+    }
+    .move-card.physical { border:1px solid rgba(255,255,255,0.2); }
+    .move-card.special  { border:2px dashed rgba(255,255,255,0.2); }
+    /* glow by type */
+    .move-card.type-fire     { box-shadow:0 0 8px rgba(240,128,48,0.7); }
+    /* …repeat for each .move-card.type-xxx */
+
+    /* ── STATS TABLE ── */
+    .stats-table {
+      width:100%; table-layout:fixed; margin-top:.5rem; border-collapse:collapse;
+    }
+    .stats-table th,
+    .stats-table td {
+      padding:.3rem .4rem; vertical-align:middle;
+    }
+    .stats-table th {
+      text-align:left; color:var(--accent); font-weight:600;
+    }
+    .stat-name { display:flex; align-items:center; }
+    .stat-name .mod {
+      font-size:.75rem; margin-left:.25rem; font-weight:bold;
+    }
+    /* ── Stats Bar Containers & Bars ── */
+.stats-bar-container {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  height: 12px;
+  overflow: hidden;
+}
+.stats-bar {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 6px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: white;
+  width: 0;                     /* start at 0 for the animation */
+  transition: width 1.2s ease-in-out;
+}
+
+/* ── Stat-value color classes ── */
+.stats-bar.terrible   { background: #f44336; }
+.stats-bar.very-low   { background: #ff7043; }
+.stats-bar.low        { background: #f5dc40; }
+.stats-bar.mid        { background: #8bc34a; }
+.stats-bar.high       { background: #4caf50; }
+.stats-bar.very-high  { background: #4fc3f7; }
+.stats-bar.ultra      { background: #00bcd4; }
+
+.types,
+    .abilities {
+    margin: 0.5rem 0;
+    }
+    .types span,
+    .abilities .ability-pill {
+    margin: 0 4px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: inline-block;
+    box-shadow: 0 0 6px rgba(0,0,0,0.2);
+    transition: 0.3s ease;
+    }
+    .types span:hover,
+    .abilities .ability-pill:hover {
+    box-shadow: 0 0 12px rgba(0,0,0,0.3);
+    }
+  /* ── Type Colors + Glow ── */
+  .types .type-normal {
+  background: #A8A878;
+  color: #fff;
+  box-shadow: 0 0 6px rgba(168, 168, 120, 0.7);
+}
+
+.types .type-fire {
+  background: #F08030;
+  color: #fff;
+  box-shadow: 0 0 6px rgba(240, 128, 48, 0.7);
+}
+
+.types .type-water {
+  background: #6890F0;
+  color: #fff;
+  box-shadow: 0 0 6px rgba(104, 144, 240, 0.7);
+}
+
+.types .type-electric {
+  background: #F8D030;
+  color: #000;
+  box-shadow: 0 0 6px rgba(248, 208, 48, 0.7);
+}
+
+.types .type-grass {
+  background: #78C850;
+  color: #fff;
+  box-shadow: 0 0 6px rgba(120, 200, 80, 0.7);
+}
+
+.types .type-ice {
+  background: #98D8D8;
+  color: #000;
+  box-shadow: 0 0 6px rgba(152, 216, 216, 0.7);
+}
+
+.types .type-fighting {
+  background: #C03028;
+  color: #fff;
+  box-shadow: 0 0 6px rgba(192, 48, 40, 0.7);
+}
+
+.types .type-poison {
+  background: #A040A0;
+  color: #fff;
+  box-shadow: 0 0 6px rgba(160, 64, 160, 0.7);
+}
+
+.types .type-ground {
+  background: #E0C068;
+  color: #000;
+  box-shadow: 0 0 6px rgba(224, 192, 104, 0.7);
+}
+
+.types .type-flying {
+  background: #A890F0;
+  color: #fff;
+  box-shadow: 0 0 6px rgba(168, 144, 240, 0.7);
+}
+
+.types .type-psychic {
+  background: #F85888;
+  color: #fff;
+  box-shadow: 0 0 6px rgba(248, 88, 136, 0.7);
+}
+
+.types .type-bug {
+  background: #A8B820;
+  color: #fff;
+  box-shadow: 0 0 6px rgba(168, 184, 32, 0.7);
+}
+
+.types .type-rock {
+  background: #B8A038;
+  color: #fff;
+  box-shadow: 0 0 6px rgba(184, 160, 56, 0.7);
+}
+
+.types .type-ghost {
+  background: #705898;
+  color: #fff;
+  box-shadow: 0 0 6px rgba(112, 88, 152, 0.7);
+}
+
+.types .type-dragon {
+  background: #7038F8;
+  color: #fff;
+  box-shadow: 0 0 6px rgba(112, 56, 248, 0.7);
+}
+
+.types .type-dark {
+  background: #705848;
+  color: #fff;
+  box-shadow: 0 0 6px rgba(112, 88, 72, 0.7);
+}
+
+.types .type-steel {
+  background: #B8B8D0;
+  color: #000;
+  box-shadow: 0 0 6px rgba(184, 184, 208, 0.7);
+}
+
+.types .type-fairy {
+  background: #EE99AC;
+  color: #000;
+  box-shadow: 0 0 6px rgba(238, 153, 172, 0.7);
+}
+    /* ── Ability Pill Variants ── */
+    .abilities .ability-pill            { background: var(--accent); color: #fff; }
+    .abilities .ability-pill.priority   { background: teal;    box-shadow:0 0 8px teal; }
+    .abilities .ability-pill.hidden     { background:#7b1fa2; box-shadow:0 0 8px #7b1fa2; }
+    .abilities .ability-pill.selected   { box-shadow: 0 0 12px var(--accent); transform: scale(1.05); }
+
+  </style>
+</head>
+<body>
+
+    <div class="panel left-panel">
+        <h2>Waveform Builder</h2>
+      
+        <!-- 1) Pokémon name & autocomplete -->
+        <label>Pokémon Name</label>
+        <input type="text" id="nameInput" placeholder="e.g. Garchomp" list="pokemon-list">
+      
+        <!-- 2) Nature (25 options!) -->
+        <label>Nature</label>
+        <select id="natureInput">
+          <option>Hardy</option><option>Lonely</option><option>Brave</option><option>Adamant</option>
+          <option>Naughty</option><option>Bold</option><option>Docile</option><option>Relaxed</option>
+          <option>Impish</option><option>Lax</option><option>Timid</option><option>Hasty</option>
+          <option>Serious</option><option>Jolly</option><option>Naive</option><option>Modest</option>
+          <option>Mild</option><option>Quiet</option><option>Bashful</option><option>Rash</option>
+          <option>Calm</option><option>Gentle</option><option>Sassy</option><option>Careful</option>
+          <option>Quirky</option>
+        </select>
+      
+        <!-- 3) Held Item -->
+        <label>Held Item</label>
+        <input type="text" id="itemInput" placeholder="e.g. Choice Scarf" list="item-list">
+      
+        <!-- 4) Ability -->
+        <label>Ability</label>
+        <select id="abilityInput">
+          <option value="">Select Ability…</option>
+        </select>
+      
+        <!-- 5) Card theme -->
+        <label>Card Background Theme</label>
+        <select id="bgThemeSelect">
+          <option value="default">Glass Fade</option>
+          <option value="sunset">Fiery Sunset</option>
+          <option value="abyss">Abyssal Dark</option>
+          <option value="aqua">Aqua Flow</option>
+          <option value="grid">Digital Grid</option>
+        </select>
+      
+        <!-- 6) Moves -->
+        <label>Moves</label>
+        <input class="moveInput" placeholder="Move 1" list="move-list">
+        <input class="moveInput" placeholder="Move 2" list="move-list">
+        <input class="moveInput" placeholder="Move 3" list="move-list">
+        <input class="moveInput" placeholder="Move 4" list="move-list">
+      
+        <!-- 7) Action Buttons -->
+        <button id="updateBtn">Update Card</button>
+        <button id="exportBtn">Export PNG</button>
+      
+        <!-- hidden datalists for autocomplete -->
+        <datalist id="pokemon-list"></datalist>
+        <datalist id="move-list"></datalist>
+        <datalist id="item-list"></datalist>
+      </div>
+
+      <div class="panel right-panel">
+        <div class="card" id="waveformCard">
+          <h3 id="pokeName">Garchomp</h3>
+          <div class="sprite-container">
+            <img id="pokeImg" src="" alt="Sprite">
+          </div>
+          <div class="types"    id="pokeTypes"></div>
+          <div class="abilities" id="pokeAbilities"></div>
+         <!-- ── Nature display ── -->
+          <p id="pokeNature" style="margin:.5rem 0; font-weight:600;"></p>
+
+          <div class="item-display">
+            <img id="itemImg" src="" alt="">
+            <span id="pokeItem">None</span>
+          </div>
+          <h4>Base Stats</h4>
+          <div id="statsChart"></div>
+          <h4>Moves</h4>
+          <div class="moves-grid" id="movesGrid"></div>
+        </div>
+      </div>
+      <script>
+        // — Map each nature to [↑,↓] stat keys
+        const natureMap = {
+          Hardy: [null,null],  Lonely:['Atk','Def'], Brave:['Atk','Spe'], Adamant:['Atk','SpA'],
+          Naughty:['Atk','SpD'], Bold:['Def','Atk'], Docile:[null,null], Relaxed:['Def','Spe'],
+          Impish:['Def','SpA'], Lax:['Def','SpD'], Timid:['Spe','Atk'], Hasty:['Spe','Def'],
+          Serious:[null,null], Jolly:['Spe','SpA'], Naive:['Spe','SpD'], Modest:['SpA','Atk'],
+          Mild:['SpA','Def'], Quiet:['SpA','Spe'], Bashful:[null,null], Rash:['SpA','SpD'],
+          Calm:['SpD','Atk'], Gentle:['SpD','Def'], Sassy:['SpD','Spe'], Careful:['SpD','SpA'],
+          Quirky:[null,null]
+        };
+      
+        function capitalize(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+      
+        // 1) Autocomplete lists
+        async function loadAutocompleteLists(){
+          const [pRes,mRes]=await Promise.all([
+            fetch('https://pokeapi.co/api/v2/pokemon?limit=10000'),
+            fetch('https://pokeapi.co/api/v2/move?limit=10000')
+          ]);
+          const [pJson,mJson]=await Promise.all([pRes.json(),mRes.json()]);
+          document.getElementById('pokemon-list').innerHTML = pJson.results
+            .map(p=>`<option value="${capitalize(p.name)}">`).join('');
+          document.getElementById('move-list').innerHTML = mJson.results
+            .map(m=>`<option value="${capitalize(m.name.replace(/-/g,' '))}">`).join('');
+        }
+      
+        // 2) Items datalist
+        async function loadItemList(){
+          const res=await fetch('https://pokeapi.co/api/v2/item?limit=10000'),
+                j=await res.json();
+          document.getElementById('item-list').innerHTML = j.results
+            .map(i=>`<option value="${capitalize(i.name.replace(/-/g,' '))}">`).join('');
+        }
+      
+        // 3) Ability dropdown
+        async function loadPokemonAbilities(){
+          const raw=document.getElementById('nameInput').value.trim().toLowerCase(),
+                sel=document.getElementById('abilityInput');
+          if(!raw){ sel.innerHTML='<option value="">Select Ability…</option>'; return; }
+          sel.innerHTML='<option>Loading…</option>';
+          try{
+            const r=await fetch(`https://pokeapi.co/api/v2/pokemon/${raw}`);
+            if(!r.ok) throw '';
+            const d=await r.json();
+            const opts=d.abilities.map(a=>capitalize(a.ability.name.replace(/-/g,' ')));
+            sel.innerHTML='<option value="">Select Ability…</option>'+opts.map(o=>`<option>${o}</option>`).join('');
+          } catch{
+            sel.innerHTML='<option value="">None found</option>';
+          }
+        }
+      
+        // 4) Stats renderer (with nature mods)
+        function renderStats(arr){
+          const sh={hp:'HP',attack:'Atk',defense:'Def','special-attack':'SpA','special-defense':'SpD',speed:'Spe'},
+                [up,down]=natureMap[document.getElementById('natureInput').value]||[],
+                maxV=Math.max(200,...arr.map(s=>s.base_stat));
+          let total=0,html=`<table class="stats-table"><thead><tr>
+            <th>Stat</th><th>Bar</th><th>Base</th>
+          </tr></thead><tbody>`;
+          arr.forEach((s,i)=>{
+            const nm=sh[s.stat.name], val=s.base_stat;
+            total+=val;
+            const pct=(val/maxV*100).toFixed(1);
+            let cls = val>=140?'ultra': val>=120?'very-high': val>=100?'high':
+                      val>=80?'mid': val>=60?'low': val>=40?'very-low':'terrible';
+            const mod = nm===up?'<span class="mod">+</span>': nm===down?'<span class="mod">−</span>':'';
+            html+=`<tr>
+              <td class="stat-name">${nm}${mod}</td>
+              <td><div class="stats-bar-container">
+                   <div class="stats-bar ${cls}" data-width="${pct}%"></div>
+                  </div></td>
+              <td>${val}</td>
+            </tr>`;
+          });
+          html+=`<tr><td><strong>Total</strong></td><td></td><td><strong>${total}</strong></td></tr>
+            </tbody></table>`;
+          const cnt=document.getElementById('statsChart');
+          cnt.innerHTML=html;
+          cnt.querySelectorAll('.stats-bar').forEach((bar,i)=>{
+            bar.style.width='0%';
+            setTimeout(()=>bar.style.width=bar.dataset.width,100*(i+1));
+          });
+        }
+      
+        // 5) Moves renderer (box + glow + phys/special)
+        async function renderMoves(names){
+          const grid=document.getElementById('movesGrid'),
+                dataArr=await Promise.all(names.map(m=>
+                  fetch(`https://pokeapi.co/api/v2/move/${m.toLowerCase().replace(/ /g,'-')}`)
+                    .then(r=>r.ok?r.json():null).catch(_=>null)
+                ));
+          grid.innerHTML = dataArr.map(md=>{
+            if(!md) return '';
+            const type=md.type.name,
+                  pw=md.power||'—',
+                  cat=md.damage_class.name,  
+                  mark=cat==='physical'?'●':cat==='special'?'■':'',
+                  nm=capitalize(md.name.replace(/-/g,' '));
+            return `<div class="move-card type-${type} ${cat}">
+              <span class="cat-marker">${mark}</span>
+              <span class="move-name">${nm}</span>
+              <span class="move-power">${pw}</span>
+            </div>`;
+          }).join('');
+        }
+      
+        // 6) Main updateCard()
+        async function updateCard(){
+          const nameRaw=document.getElementById('nameInput').value.trim(),
+                name=nameRaw||'Garchomp',
+                nat=document.getElementById('natureInput').value,
+                selAb=document.getElementById('abilityInput').value||'Unknown',
+                item=document.getElementById('itemInput').value.trim()||'None',
+                theme=document.getElementById('bgThemeSelect').value;
+          // immediate text
+          document.getElementById('pokeName').textContent=name;
+          document.getElementById('pokeNature').textContent=nat;
+          document.getElementById('pokeItem').textContent=item;
+          document.getElementById('waveformCard').className=`card theme-${theme}`;
+      
+          try{
+            const r=await fetch(`https://pokeapi.co/api/v2/pokemon/${name.toLowerCase()}`);
+            if(!r.ok) throw '';
+            const d=await r.json();
+            // sprite
+            document.getElementById('pokeImg').src =
+              d.sprites.front_default||d.sprites.other['official-artwork'].front_default;
+            // types
+            document.getElementById('pokeTypes').innerHTML =
+              d.types.map(t=>`<span class="type-${t.type.name}">${capitalize(t.type.name)}</span>`).join('');
+            // abilities (with selected highlight)
+            const prio=["delta-stream","dry-skin","earth-eater","filter","flash-fire","fluffy",
+                        "heatproof","levitate","lightning-rod","motor-drive","purifying-salt",
+                        "sap-sipper","storm-drain","tera-shell","thick-fat","volt-absorb",
+                        "water-absorb","water-bubble","well-baked-body","wonder-guard"];
+            document.getElementById('pokeAbilities').innerHTML =
+              d.abilities.map(a=>{
+                const ab=a.ability.name.toLowerCase(),
+                      disp=capitalize(ab.replace(/-/g,' ')),
+                      hid=a.is_hidden, p=prio.includes(ab),
+                      cls=['ability-pill',p?'priority':'',hid?'hidden':'',
+                           disp===selAb?'selected':''].filter(Boolean).join(' ');
+                return `<span class="${cls}">${disp}${hid?' (HA)':''}</span>`;
+              }).join('');
+            // stats & moves
+            renderStats(d.stats);
+          }catch{
+            // fallback
+            document.getElementById('pokeImg').src =
+              'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/0.png';
+            document.getElementById('pokeTypes').innerHTML='';
+            document.getElementById('pokeAbilities').innerHTML='';
+            document.getElementById('statsChart').innerHTML='';
+          }
+          // item sprite
+          const ii=document.getElementById('itemImg');
+          if(item!=='None'){
+            fetch(`https://pokeapi.co/api/v2/item/${item.toLowerCase().replace(/ /g,'-')}`)
+              .then(r=>r.ok?r.json():Promise.reject())
+              .then(d=>{ ii.src=d.sprites.default; ii.alt=item; })
+              .catch(_=>{ ii.src=''; ii.alt=''; });
+          }else{ ii.src=''; ii.alt=''; }
+          // moves
+          const moves = Array.from(document.getElementsByClassName('moveInput'))
+                             .map(i=>i.value.trim()).filter(Boolean);
+          renderMoves(moves);
+        }
+      
+        // 7) Wire everything up + initial render
+        document.addEventListener('DOMContentLoaded',()=>{
+  loadAutocompleteLists();
+
+  loadItemList();
+  document.getElementById('nameInput')
+          .addEventListener('change', loadPokemonAbilities);
+  document.getElementById('natureInput')
+          .addEventListener('change', updateCard);
+          
+
+  // ← MISSING LINE:
+  document.getElementById('updateBtn')
+          .addEventListener('click', updateCard);
+
+
+  document.getElementById('exportBtn')
+          .addEventListener('click', ()=>{/* … */});
+
+  updateCard();  // initial render
+});
+      </script>
+      </body>
+      </html>
+            
