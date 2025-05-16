@@ -1,4 +1,4 @@
-// form.js — Handles input events, data fetching, and Showdown import/export
+// form.js — Handles input events, data fetching, EV caps, and Showdown import/export
 
 import { fetchPokemonData, fetchItemList } from './api.js';
 import { renderCard } from './render.js';
@@ -44,6 +44,25 @@ export function initFormEvents() {
   populateMoveList();
   populateItemList();
   populateNatures();
+
+  // Clamp EVs per‐stat and total
+  STAT_KEYS.forEach(key => {
+    const el = evInputs[key];
+    if (!el) return;
+    el.addEventListener('input', () => {
+      let v = parseInt(el.value, 10) || 0;
+      if (v > 252) v = 252;
+      if (v < 0)   v = 0;
+      // clamp total to 508
+      const total = STAT_KEYS.reduce((sum, k) => sum + (parseInt(evInputs[k].value,10)||0), 0);
+      if (total > 508) {
+        const others = total - v;
+        v = Math.max(0, 508 - others);
+      }
+      el.value = v;
+      scheduleUpdate();
+    });
+  });
 
   // Gather all form controls
   const allInputs = [
@@ -199,12 +218,12 @@ async function updateCard() {
     ivs:    {}
   };
 
-  // Capture EVs and IVs
+  // Capture EVs and IVs (values already clamped)
   STAT_KEYS.forEach(key => {
     const evEl = document.getElementById(`ev-${key}`);
     const ivEl = document.getElementById(`iv-${key}`);
-    options.evs[key] = evEl ? Math.min(252, Math.max(0, parseInt(evEl.value,10)||0)) : 0;
-    options.ivs[key] = ivEl ? Math.min(31,  Math.max(0, parseInt(ivEl.value,10)||31)) : 31;
+    options.evs[key] = evEl ? parseInt(evEl.value,10)||0 : 0;
+    options.ivs[key] = ivEl ? parseInt(ivEl.value,10)||31 : 31;
   });
 
   renderCard(data, options);
@@ -213,7 +232,6 @@ async function updateCard() {
 // ————————————————————————————————————————
 // 🔄 Showdown Import/Export Helpers
 // ————————————————————————————————————————
-
 function parseShowdown(txt) {
   const lines = txt.split('\n').map(l => l.trim()).filter(Boolean);
   if (lines.length < 2) return null;
